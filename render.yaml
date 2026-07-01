@@ -1,0 +1,53 @@
+# ============================================================
+# Render Deployment Configuration
+# https://render.com/docs/yaml-spec
+# ============================================================
+#
+# NOTE on database: Render's free tier provides PostgreSQL.
+# For MySQL, use PlanetScale (free tier) or Railway's MySQL
+# add-on and supply DB_* vars manually in the Render dashboard.
+#
+# If using PostgreSQL, change PyMySQL -> psycopg2-binary in
+# requirements.txt and update the SQLAlchemy URI dialect in
+# config.py to "postgresql+psycopg2://".
+# ============================================================
+services:
+  - type: web
+    name: smart-energy-analytics
+    env: python
+    region: singapore
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn "app:create_app()" --bind 0.0.0.0:$PORT --workers 2 --timeout 120 --access-logfile - --error-logfile -
+    healthCheckPath: /
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DB_HOST
+        sync: false          # Set manually in Render dashboard
+      - key: DB_PORT
+        value: "3306"
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_NAME
+        value: smart_energy_db
+      - key: CO2_EMISSION_FACTOR
+        value: "0.82"
+      - key: DEFAULT_TARIFF_RATE
+        value: "6.50"
+      - key: PASSWORD_RESET_EXPIRY
+        value: "3600"
+      - key: MAIL_SERVER
+        sync: false
+      - key: MAIL_PORT
+        value: "587"
+      - key: MAIL_USERNAME
+        sync: false
+      - key: MAIL_PASSWORD
+        sync: false
+      - key: MAIL_DEFAULT_SENDER
+        sync: false
