@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+{% block title %}Carbon Footprint – Smart Energy Analytics{% endblock %}
+{% block content %}
+<div class="page-title">Carbon Footprint Dashboard</div>
+<div class="page-subtitle">{{ cur_month_name }} {{ cur_year }} &mdash; Environmental impact of your energy usage</div>
+
+<!-- ── KPI Cards ──────────────────────────────────────────── -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-xl-3">
+    <div class="kpi-card">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <div class="kpi-label">CO₂ Generated</div>
+          <div class="kpi-value text-danger">{{ "%.1f"|format(co2_generated) }}</div>
+          <div class="kpi-sub">kg this month</div>
+        </div>
+        <div class="kpi-icon text-danger"><i class="fas fa-smog"></i></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-6 col-xl-3">
+    <div class="kpi-card">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <div class="kpi-label">CO₂ Saved</div>
+          <div class="kpi-value text-success">{{ "%.1f"|format(co2_saved) }}</div>
+          <div class="kpi-sub">kg vs. baseline</div>
+        </div>
+        <div class="kpi-icon text-success"><i class="fas fa-recycle"></i></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-6 col-xl-3">
+    <div class="kpi-card">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <div class="kpi-label">Trees Equivalent</div>
+          <div class="kpi-value text-warning">{{ trees_equivalent }}</div>
+          <div class="kpi-sub">trees / month to offset</div>
+        </div>
+        <div class="kpi-icon text-warning"><i class="fas fa-tree"></i></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-6 col-xl-3">
+    <div class="kpi-card">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <div class="kpi-label">Sustainability Score</div>
+          <div class="kpi-value text-info">{{ sustainability_score }}<small>/100</small></div>
+          <div class="kpi-sub">
+            <span class="badge bg-{{ rating.color }}">
+              <i class="fas {{ rating.icon }} me-1"></i>{{ rating.label }}
+            </span>
+          </div>
+        </div>
+        <div class="kpi-icon text-info"><i class="fas fa-globe-americas"></i></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Annual + Sustainability Bar ───────────────────────────── -->
+<div class="row g-3 mb-4">
+  <div class="col-lg-4">
+    <div class="card h-100">
+      <div class="card-header"><i class="fas fa-calendar-alt text-warning me-2"></i>Year-to-Date</div>
+      <div class="card-body text-center">
+        <div class="kpi-value text-danger" style="font-size:2.5rem">{{ "%.1f"|format(annual_co2) }}</div>
+        <div class="kpi-sub mb-3">kg CO₂ in {{ cur_year }}</div>
+        <div class="text-muted small">
+          Based on emission factor of {{ emission_factor }} kg CO₂/kWh
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-8">
+    <div class="card h-100">
+      <div class="card-header"><i class="fas fa-leaf text-warning me-2"></i>Sustainability Progress</div>
+      <div class="card-body">
+        <div class="d-flex justify-content-between mb-1">
+          <span class="text-muted small">Score</span>
+          <span class="fw-bold">{{ sustainability_score }} / 100</span>
+        </div>
+        <div class="progress mb-3" style="height:10px;border-radius:6px">
+          <div class="progress-bar bg-{{ rating.color }}" style="width:{{ sustainability_score }}%"></div>
+        </div>
+        <div class="row text-center small">
+          <div class="col-3 {{ 'text-danger fw-bold' if rating.label=='Bronze' else 'text-muted' }}">
+            <i class="fas fa-award d-block mb-1"></i>Bronze<br><small>0-49</small>
+          </div>
+          <div class="col-3 {{ 'text-secondary fw-bold' if rating.label=='Silver' else 'text-muted' }}">
+            <i class="fas fa-medal d-block mb-1"></i>Silver<br><small>50-69</small>
+          </div>
+          <div class="col-3 {{ 'text-warning fw-bold' if rating.label=='Gold' else 'text-muted' }}">
+            <i class="fas fa-trophy d-block mb-1"></i>Gold<br><small>70-84</small>
+          </div>
+          <div class="col-3 {{ 'text-info fw-bold' if rating.label=='Platinum' else 'text-muted' }}">
+            <i class="fas fa-gem d-block mb-1"></i>Platinum<br><small>85-100</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Trend Chart ────────────────────────────────────────── -->
+<div class="card">
+  <div class="card-header"><i class="fas fa-chart-area text-warning me-2"></i>Monthly CO₂ Emissions Trend</div>
+  <div class="card-body">
+    {% if chart_labels %}
+      <div class="chart-wrapper">
+        <canvas id="carbonChart"></canvas>
+      </div>
+    {% else %}
+      <div class="text-center py-5 text-muted">
+        <i class="fas fa-database fa-3x mb-3 d-block"></i>
+        No usage data yet.
+        <a href="{{ url_for('data_import.index') }}">Import your data</a> to see your carbon trend.
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+{% if chart_labels %}
+<script>
+const seTheme = window.seChartTheme();
+const ctx = document.getElementById("carbonChart").getContext("2d");
+new Chart(ctx, {
+  type: "line",
+  data: {
+    labels: {{ chart_labels | tojson }},
+    datasets: [{
+      label: "CO₂ (kg)",
+      data: {{ chart_co2 | tojson }},
+      borderColor: "rgba(239,68,68,1)",
+      backgroundColor: "rgba(239,68,68,0.15)",
+      borderWidth: 2, tension: 0.3, fill: true, pointRadius: 3,
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.y.toFixed(2)} kg CO₂` } }
+    },
+    scales: {
+      x: { ticks: { color: seTheme.text }, grid: { color: seTheme.grid } },
+      y: { ticks: { color: seTheme.text }, grid: { color: seTheme.grid }, beginAtZero: true }
+    }
+  }
+});
+</script>
+{% endif %}
+{% endblock %}

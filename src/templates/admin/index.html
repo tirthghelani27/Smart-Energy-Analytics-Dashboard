@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard – Smart Energy Analytics{% endblock %}
+{% block content %}
+<div class="page-title">Admin Dashboard</div>
+<div class="page-subtitle">Platform-wide statistics and management</div>
+
+<!-- ── Quick Links ────────────────────────────────────────── -->
+<div class="d-flex gap-2 flex-wrap mb-4">
+  <a href="{{ url_for('admin.users') }}" class="btn btn-outline-secondary btn-sm">
+    <i class="fas fa-users me-1"></i>Manage Users
+  </a>
+  <a href="{{ url_for('admin.datasets') }}" class="btn btn-outline-secondary btn-sm">
+    <i class="fas fa-database me-1"></i>Manage Datasets
+  </a>
+  <a href="{{ url_for('admin.alerts') }}" class="btn btn-outline-secondary btn-sm">
+    <i class="fas fa-bell me-1"></i>Manage Alerts
+    {% if unread_alerts %}<span class="badge bg-danger ms-1">{{ unread_alerts }}</span>{% endif %}
+  </a>
+</div>
+
+<!-- ── KPI Cards ──────────────────────────────────────────── -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-xl-3">
+    <div class="kpi-card">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <div class="kpi-label">Total Users</div>
+          <div class="kpi-value text-warning">{{ total_users }}</div>
+          <div class="kpi-sub">{{ active_users }} active &middot; {{ admin_users }} admin</div>
+        </div>
+        <div class="kpi-icon text-warning"><i class="fas fa-users"></i></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-6 col-xl-3">
+    <div class="kpi-card">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <div class="kpi-label">Active Users</div>
+          <div class="kpi-value text-success">{{ active_users }}</div>
+          <div class="kpi-sub">of {{ total_users }} total</div>
+        </div>
+        <div class="kpi-icon text-success"><i class="fas fa-user-check"></i></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-6 col-xl-3">
+    <div class="kpi-card">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <div class="kpi-label">Total Energy Tracked</div>
+          <div class="kpi-value text-info">{{ "%.0f"|format(total_energy_kwh) }}</div>
+          <div class="kpi-sub">kWh &middot; {{ total_records }} records</div>
+        </div>
+        <div class="kpi-icon text-info"><i class="fas fa-bolt"></i></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-6 col-xl-3">
+    <div class="kpi-card">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <div class="kpi-label">Total Carbon Saved</div>
+          <div class="kpi-value text-success">{{ "%.0f"|format(total_carbon_saved) }}</div>
+          <div class="kpi-sub">kg CO₂ across all users</div>
+        </div>
+        <div class="kpi-icon text-success"><i class="fas fa-leaf"></i></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-xl-3">
+    <div class="kpi-card">
+      <div class="kpi-label">Total Reports Generated</div>
+      <div class="kpi-value text-warning">{{ total_reports }}</div>
+      <div class="kpi-sub">PDF documents</div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="kpi-card">
+      <div class="kpi-label">CO₂ Generated</div>
+      <div class="kpi-value text-danger">{{ "%.0f"|format(total_carbon_generated) }}</div>
+      <div class="kpi-sub">kg total</div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="kpi-card">
+      <div class="kpi-label">Predictions Made</div>
+      <div class="kpi-value text-info">{{ total_predictions }}</div>
+      <div class="kpi-sub">ML forecasts</div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="kpi-card">
+      <div class="kpi-label">Alerts</div>
+      <div class="kpi-value text-danger">{{ total_alerts }}</div>
+      <div class="kpi-sub">{{ unread_alerts }} unread</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Charts ─────────────────────────────────────────────── -->
+<div class="row g-3">
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-header"><i class="fas fa-user-plus text-warning me-2"></i>New Users (Last 12 Months)</div>
+      <div class="card-body">
+        {% if user_chart_labels %}
+        <div class="chart-wrapper"><canvas id="userChart"></canvas></div>
+        {% else %}
+        <div class="text-center py-5 text-muted">No user signup data yet.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-header"><i class="fas fa-chart-area text-warning me-2"></i>Platform Energy Usage (Last 12 Months)</div>
+      <div class="card-body">
+        {% if energy_chart_labels %}
+        <div class="chart-wrapper"><canvas id="energyChart"></canvas></div>
+        {% else %}
+        <div class="text-center py-5 text-muted">No usage data yet.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const seTheme = window.seChartTheme();
+{% if user_chart_labels %}
+new Chart(document.getElementById("userChart").getContext("2d"), {
+  type: "bar",
+  data: {
+    labels: {{ user_chart_labels | tojson }},
+    datasets: [{ label: "New Users", data: {{ user_chart_values | tojson }},
+      backgroundColor: "rgba(245,158,11,0.6)", borderColor: "rgba(245,158,11,1)",
+      borderWidth: 1, borderRadius: 5 }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { ticks: { color: seTheme.text }, grid: { color: seTheme.grid } },
+      y: { ticks: { color: seTheme.text, stepSize: 1 }, grid: { color: seTheme.grid }, beginAtZero: true }
+    }
+  }
+});
+{% endif %}
+
+{% if energy_chart_labels %}
+new Chart(document.getElementById("energyChart").getContext("2d"), {
+  type: "line",
+  data: {
+    labels: {{ energy_chart_labels | tojson }},
+    datasets: [{ label: "kWh", data: {{ energy_chart_values | tojson }},
+      borderColor: "rgba(59,130,246,1)", backgroundColor: "rgba(59,130,246,0.15)",
+      borderWidth: 2, tension: 0.3, fill: true, pointRadius: 3 }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false },
+      tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.y.toFixed(2)} kWh` } } },
+    scales: {
+      x: { ticks: { color: seTheme.text }, grid: { color: seTheme.grid } },
+      y: { ticks: { color: seTheme.text }, grid: { color: seTheme.grid }, beginAtZero: true }
+    }
+  }
+});
+{% endif %}
+</script>
+{% endblock %}

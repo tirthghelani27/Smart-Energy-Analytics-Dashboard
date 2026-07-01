@@ -1,0 +1,18 @@
+<footer class="py-3 mt-auto" style="background:var(--se-dark);border-top:1px solid var(--se-border);">
+  <div class="container-fluid px-3">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+      <div class="text-muted small">
+        <i class="fas fa-bolt text-warning me-1"></i>
+        <strong>Smart Energy Analytics</strong> &mdash;
+        Monitor, predict, and reduce your energy footprint.
+      </div>
+      <div class="text-muted small">
+        <span>CO₂ factor: {{ emission_factor }} kg/kWh</span>
+        &middot;
+        <span>Tariff: ₹{{ tariff_rate }}/kWh</span>
+        &middot;
+        <span>&copy; 2025 Built with Flask &amp; scikit-learn</span>
+      </div>
+    </div>
+  </div>
+</footer>

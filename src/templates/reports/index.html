@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Reports – Smart Energy Analytics{% endblock %}
+{% block content %}
+<div class="page-title">Reports</div>
+<div class="page-subtitle">Generate and download PDF reports of your energy usage</div>
+
+<!-- ── Generate Report Cards ──────────────────────────────── -->
+<div class="row g-3 mb-4">
+  {% for key, (label, icon, color) in report_types.items() %}
+  <div class="col-md-6 col-lg-4">
+    <div class="card h-100">
+      <div class="card-body text-center d-flex flex-column">
+        <div class="mb-3" style="font-size:2rem"><i class="fas {{ icon }} {{ color }}"></i></div>
+        <h6 class="fw-bold">{{ label }}</h6>
+        <p class="text-muted small flex-grow-1">
+          {% if key == 'monthly' %}
+            Daily breakdown and totals for the current month.
+          {% elif key == 'annual' %}
+            12-month usage trend, growth rate, and cost summary.
+          {% elif key == 'forecast' %}
+            ML-based next day/week/month predictions and accuracy.
+          {% elif key == 'carbon' %}
+            CO₂ emissions, savings, trees equivalent &amp; sustainability score.
+          {% elif key == 'recommendation' %}
+            Personalized energy-saving tips and potential savings.
+          {% endif %}
+        </p>
+        <a href="{{ url_for('reports.generate', report_type=key) }}" class="btn btn-primary btn-sm">
+          <i class="fas fa-file-pdf me-1"></i>Generate PDF
+        </a>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- ── Report History ─────────────────────────────────────── -->
+<div class="card">
+  <div class="card-header">
+    <i class="fas fa-history text-warning me-2"></i>Report History
+  </div>
+  <div class="card-body p-0">
+    {% if history %}
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Type</th>
+            <th>Generated</th>
+            <th class="text-end">Download</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in history %}
+          <tr>
+            <td>{{ r.title }}</td>
+            <td>
+              {% set icon = report_types.get(r.report_type, ('','fa-file','text-muted'))[1] %}
+              {% set color = report_types.get(r.report_type, ('','fa-file','text-muted'))[2] %}
+              <span class="badge bg-secondary">
+                <i class="fas {{ icon }} {{ color }} me-1"></i>{{ r.report_type|capitalize }}
+              </span>
+            </td>
+            <td>{{ r.generated_at.strftime('%d %b %Y, %H:%M') }}</td>
+            <td class="text-end">
+              <a href="{{ url_for('reports.download', report_id=r.id) }}" class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-download me-1"></i>PDF
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="text-center py-4 text-muted">
+      <i class="fas fa-file-pdf fa-2x mb-2 d-block"></i>
+      No reports generated yet. Generate one above.
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% block title %}Import Data – Smart Energy Analytics{% endblock %}
+{% block content %}
+<div class="page-title">Import Usage Data</div>
+<div class="page-subtitle">Upload a CSV/Excel file or add a single day's reading manually</div>
+
+<div class="row g-3 mb-4">
+
+  <!-- ── CSV Upload ──────────────────────────────────────── -->
+  <div class="col-lg-7">
+    <div class="card h-100">
+      <div class="card-header"><i class="fas fa-upload text-warning me-2"></i>Bulk Upload (CSV / Excel)</div>
+      <div class="card-body">
+        <form method="POST" action="{{ url_for('data_import.upload') }}" enctype="multipart/form-data">
+          <div class="mb-3">
+            <label class="form-label">File</label>
+            <input type="file" class="form-control" name="file" accept=".csv,.xlsx,.xls" required>
+            <div class="form-text text-muted">
+              Required columns: <code>date</code>, <code>units_consumed</code>.
+              Optional: <code>cost</code>, <code>notes</code>.<br>
+              Date formats accepted: YYYY-MM-DD, DD-MM-YYYY, DD/MM/YYYY, MM/DD/YYYY.
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary">
+            <i class="fas fa-cloud-upload-alt me-1"></i>Upload &amp; Process
+          </button>
+        </form>
+
+        {% if report %}
+        <hr class="border-secondary my-4">
+        <h6 class="mb-3"><i class="fas fa-clipboard-check text-warning me-2"></i>Data Quality Report</h6>
+        <div class="row g-2 text-center">
+          <div class="col-4 col-md-2">
+            <div class="kpi-card p-2">
+              <div class="kpi-value text-light" style="font-size:1.3rem">{{ report.total_rows }}</div>
+              <div class="kpi-sub">Total Rows</div>
+            </div>
+          </div>
+          <div class="col-4 col-md-2">
+            <div class="kpi-card p-2">
+              <div class="kpi-value text-success" style="font-size:1.3rem">{{ report.inserted_rows }}</div>
+              <div class="kpi-sub">Inserted</div>
+            </div>
+          </div>
+          <div class="col-4 col-md-2">
+            <div class="kpi-card p-2">
+              <div class="kpi-value text-info" style="font-size:1.3rem">{{ report.updated_rows }}</div>
+              <div class="kpi-sub">Updated</div>
+            </div>
+          </div>
+          <div class="col-4 col-md-2">
+            <div class="kpi-card p-2">
+              <div class="kpi-value text-warning" style="font-size:1.3rem">{{ report.missing_values }}</div>
+              <div class="kpi-sub">Missing</div>
+            </div>
+          </div>
+          <div class="col-4 col-md-2">
+            <div class="kpi-card p-2">
+              <div class="kpi-value text-danger" style="font-size:1.3rem">{{ report.invalid_records }}</div>
+              <div class="kpi-sub">Invalid</div>
+            </div>
+          </div>
+          <div class="col-4 col-md-2">
+            <div class="kpi-card p-2">
+              <div class="kpi-value text-secondary" style="font-size:1.3rem">{{ report.duplicate_records }}</div>
+              <div class="kpi-sub">Duplicates</div>
+            </div>
+          </div>
+        </div>
+        {% if report.date_format_errors %}
+        <div class="alert alert-warning mt-3 mb-0 small">
+          <i class="fas fa-exclamation-triangle me-1"></i>
+          {{ report.date_format_errors }} row(s) had unrecognized date formats and were skipped.
+        </div>
+        {% endif %}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Manual Entry ────────────────────────────────────── -->
+  <div class="col-lg-5">
+    <div class="card h-100">
+      <div class="card-header"><i class="fas fa-keyboard text-warning me-2"></i>Manual Entry</div>
+      <div class="card-body">
+        <form method="POST" action="{{ url_for('data_import.manual_entry') }}">
+          <div class="mb-3">
+            <label class="form-label">Date</label>
+            <input type="date" class="form-control" name="date" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Units Consumed (kWh)</label>
+            <input type="number" step="0.01" min="0" max="1000" class="form-control"
+                   name="units_consumed" placeholder="e.g. 12.5" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Notes (optional)</label>
+            <input type="text" class="form-control" name="notes" placeholder="e.g. AC ran all day">
+          </div>
+          <button type="submit" class="btn btn-primary w-100">
+            <i class="fas fa-save me-1"></i>Save Entry
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Recent Imports ─────────────────────────────────────── -->
+<div class="card">
+  <div class="card-header"><i class="fas fa-history text-warning me-2"></i>Recently Added Records</div>
+  <div class="card-body p-0">
+    {% if recent %}
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr><th>Date</th><th>Units (kWh)</th><th>Cost</th><th>Source</th><th>Notes</th><th>Added</th></tr>
+        </thead>
+        <tbody>
+          {% for r in recent %}
+          <tr>
+            <td>{{ r.date.strftime('%d %b %Y') }}</td>
+            <td>{{ "%.2f"|format(r.units_consumed) }}</td>
+            <td>{% if r.cost %}₹{{ "%.2f"|format(r.cost) }}{% else %}—{% endif %}</td>
+            <td><span class="badge bg-secondary">{{ r.source }}</span></td>
+            <td class="small text-muted">{{ r.notes or "—" }}</td>
+            <td class="small text-muted">{{ r.created_at.strftime('%d %b %Y, %H:%M') }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="text-center py-4 text-muted">No records yet. Upload a file or add an entry above.</div>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}

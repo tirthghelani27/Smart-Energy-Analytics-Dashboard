@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}Create Account – Smart Energy Analytics{% endblock %}
+{% block content %}
+<div class="auth-wrapper py-4">
+  <div class="auth-card" style="max-width:520px">
+    <div class="text-center mb-4">
+      <div class="auth-logo mb-2"><i class="fas fa-bolt"></i></div>
+      <h2 class="mb-0">Create your account</h2>
+      <p class="text-muted small mt-1">Start monitoring your energy usage today</p>
+    </div>
+
+    {% include "partials/flash_messages.html" %}
+
+    <form method="POST" action="{{ url_for('auth.register') }}" novalidate>
+
+      <div class="row g-3">
+        <div class="col-6">
+          <label class="form-label" for="first_name">First Name</label>
+          <input type="text" class="form-control" id="first_name" name="first_name"
+                 value="{{ form.get('first_name','') }}" placeholder="Raj" required>
+        </div>
+        <div class="col-6">
+          <label class="form-label" for="last_name">Last Name</label>
+          <input type="text" class="form-control" id="last_name" name="last_name"
+                 value="{{ form.get('last_name','') }}" placeholder="Sharma" required>
+        </div>
+      </div>
+
+      <div class="mb-3 mt-3">
+        <label class="form-label" for="username">Username</label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="fas fa-at"></i></span>
+          <input type="text" class="form-control" id="username" name="username"
+                 value="{{ form.get('username','') }}" placeholder="rajsharma99" required
+                 autocomplete="username">
+        </div>
+        <div class="form-text text-muted">Letters, numbers, underscores only.</div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label" for="email">Email Address</label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+          <input type="email" class="form-control" id="email" name="email"
+                 value="{{ form.get('email','') }}" placeholder="raj@example.com"
+                 required autocomplete="email">
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label" for="password">Password</label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="fas fa-lock"></i></span>
+          <input type="password" class="form-control" id="password" name="password"
+                 placeholder="Min 8 chars, 1 uppercase, 1 number" required
+                 autocomplete="new-password">
+          <button type="button" class="input-group-text toggle-password" data-target="#password"
+                  style="cursor:pointer"><i class="fas fa-eye"></i></button>
+        </div>
+        <div class="mt-1">
+          <div class="progress" style="height:4px;border-radius:2px">
+            <div id="password-strength" class="progress-bar" style="width:0%;transition:width .3s"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mb-4">
+        <label class="form-label" for="confirm_password">Confirm Password</label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="fas fa-lock"></i></span>
+          <input type="password" class="form-control" id="confirm_password" name="confirm_password"
+                 placeholder="Repeat your password" required autocomplete="new-password">
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary w-100 py-2">
+        <i class="fas fa-user-plus me-2"></i>Create Account
+      </button>
+    </form>
+
+    <p class="text-center text-muted small mt-4 mb-0">
+      Already have an account?
+      <a href="{{ url_for('auth.login') }}">Sign in</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

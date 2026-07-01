@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{% block title %}Forecasting – Smart Energy Analytics{% endblock %}
+{% block content %}
+<div class="page-title">Bill & Usage Forecasting</div>
+<div class="page-subtitle">Predictions powered by Linear Regression &amp; Random Forest</div>
+
+{% if not forecast.has_data %}
+<div class="card">
+  <div class="card-body text-center py-5">
+    <i class="fas fa-brain fa-3x text-warning mb-3 d-block"></i>
+    <h5>Not enough data to forecast yet</h5>
+    <p class="text-muted">
+      You have <strong>{{ forecast.record_count }}</strong> usage record(s).
+      Add at least <strong>{{ forecast.min_required }}</strong> days of data to unlock predictions.
+    </p>
+    <a href="{{ url_for('data_import.index') }}" class="btn btn-primary">
+      <i class="fas fa-upload me-2"></i>Import Usage Data
+    </a>
+  </div>
+</div>
+
+{% else %}
+
+<!-- ── Model Cards ────────────────────────────────────────── -->
+<div class="row g-3 mb-4">
+  {% for model_key, m in forecast.models.items() %}
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span>
+          <i class="fas {{ 'fa-chart-line' if model_key == 'linear_regression' else 'fa-tree' }} text-warning me-2"></i>
+          {{ m.name }}
+        </span>
+        <span class="badge bg-info">{{ m.accuracy_pct }}% accuracy</span>
+      </div>
+      <div class="card-body">
+        <div class="row g-3 text-center mb-3">
+          <div class="col-4">
+            <div class="kpi-label">Next Day</div>
+            <div class="kpi-value text-warning" style="font-size:1.3rem">{{ "%.2f"|format(m.next_day_kwh) }}</div>
+            <div class="kpi-sub">kWh / ₹{{ "%.0f"|format(m.next_day_cost) }}</div>
+          </div>
+          <div class="col-4">
+            <div class="kpi-label">Next Week</div>
+            <div class="kpi-value text-info" style="font-size:1.3rem">{{ "%.2f"|format(m.next_week_kwh) }}</div>
+            <div class="kpi-sub">kWh / ₹{{ "%.0f"|format(m.next_week_cost) }}</div>
+          </div>
+          <div class="col-4">
+            <div class="kpi-label">Next Month</div>
+            <div class="kpi-value text-success" style="font-size:1.3rem">{{ "%.2f"|format(m.next_month_kwh) }}</div>
+            <div class="kpi-sub">kWh / ₹{{ "%.0f"|format(m.next_month_cost) }}</div>
+          </div>
+        </div>
+        <hr class="border-secondary">
+        <div class="row text-center small text-muted">
+          <div class="col-4">MAE<br><strong class="text-light">{{ m.mae }}</strong></div>
+          <div class="col-4">RMSE<br><strong class="text-light">{{ m.rmse }}</strong></div>
+          <div class="col-4">Accuracy (R²)<br><strong class="text-light">{{ m.accuracy_pct }}%</strong></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- ── Predicted Bill Summary ─────────────────────────────── -->
+<div class="card mb-4">
+  <div class="card-header"><i class="fas fa-file-invoice-dollar text-warning me-2"></i>Predicted Monthly Bill</div>
+  <div class="card-body">
+    <div class="row text-center g-3">
+      {% for model_key, m in forecast.models.items() %}
+      <div class="col-md-6">
+        <div class="kpi-card">
+          <div class="kpi-label">{{ m.name }}</div>
+          <div class="kpi-value text-success">₹{{ "%.0f"|format(m.next_month_cost) }}</div>
+          <div class="kpi-sub">@ ₹{{ "%.2f"|format(tariff) }}/kWh &mdash; {{ "%.1f"|format(m.next_month_kwh) }} kWh</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- ── Forecast Chart ─────────────────────────────────────── -->
+<div class="card">
+  <div class="card-header"><i class="fas fa-chart-area text-warning me-2"></i>Actual vs. Model Fit</div>
+  <div class="card-body">
+    <div class="chart-wrapper">
+      <canvas id="forecastChart"></canvas>
+    </div>
+  </div>
+</div>
+
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+{% if forecast.has_data %}
+<script>
+const seTheme = window.seChartTheme();
+const ctx = document.getElementById("forecastChart").getContext("2d");
+new Chart(ctx, {
+  type: "line",
+  data: {
+    labels: {{ forecast.chart.labels | tojson }},
+    datasets: [
+      {
+        label: "Actual (kWh)",
+        data: {{ forecast.chart.actual | tojson }},
+        borderColor: "rgba(245,158,11,1)",
+        backgroundColor: "rgba(245,158,11,0.15)",
+        borderWidth: 2, tension: 0.3, fill: true, pointRadius: 2,
+      },
+      {
+        label: "Linear Regression Fit",
+        data: {{ forecast.chart.linear_fit | tojson }},
+        borderColor: "rgba(59,130,246,1)",
+        backgroundColor: "transparent",
+        borderWidth: 2, borderDash: [6,4], tension: 0.3, pointRadius: 0,
+      },
+      {
+        label: "Random Forest Fit",
+        data: {{ forecast.chart.random_fit | tojson }},
+        borderColor: "rgba(16,185,129,1)",
+        backgroundColor: "transparent",
+        borderWidth: 2, borderDash: [2,2], tension: 0.3, pointRadius: 0,
+      },
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { labels: { color: seTheme.text } },
+      tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y.toFixed(2)} kWh` } }
+    },
+    scales: {
+      x: { ticks: { color: seTheme.text }, grid: { color: seTheme.grid } },
+      y: { ticks: { color: seTheme.text }, grid: { color: seTheme.grid }, beginAtZero: true }
+    }
+  }
+});
+</script>
+{% endif %}
+{% endblock %}

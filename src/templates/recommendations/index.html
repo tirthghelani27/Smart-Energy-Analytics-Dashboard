@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block title %}Recommendations – Smart Energy Analytics{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+  <div>
+    <div class="page-title">Smart Recommendations</div>
+    <div class="page-subtitle">Personalized tips to save energy, money, and reduce your footprint</div>
+  </div>
+  <a href="{{ url_for('recommendations.refresh') }}" class="btn btn-outline-secondary btn-sm">
+    <i class="fas fa-sync-alt me-1"></i>Refresh
+  </a>
+</div>
+
+<!-- ── Savings KPI Cards ──────────────────────────────────── -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-xl-3">
+    <div class="kpi-card">
+      <div class="kpi-label">Monthly Savings</div>
+      <div class="kpi-value text-success">₹{{ "%.0f"|format(total_monthly_cost_saving) }}</div>
+      <div class="kpi-sub">{{ "%.1f"|format(total_monthly_kwh_saving) }} kWh/month</div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="kpi-card">
+      <div class="kpi-label">Annual Savings</div>
+      <div class="kpi-value text-success">₹{{ "%.0f"|format(total_annual_cost_saving) }}</div>
+      <div class="kpi-sub">{{ "%.1f"|format(total_annual_kwh_saving) }} kWh/year</div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="kpi-card">
+      <div class="kpi-label">Efficiency Improvement</div>
+      <div class="kpi-value text-info">{{ efficiency_improvement_pct }}%</div>
+      <div class="kpi-sub">potential reduction</div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="kpi-card">
+      <div class="kpi-label">Active Tips</div>
+      <div class="kpi-value text-warning">{{ recommendations | selectattr('is_applied', 'equalto', false) | list | length }}</div>
+      <div class="kpi-sub">awaiting action</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Category Sections ─────────────────────────────────── -->
+{% set category_meta = {
+  'behaviour': ('fa-lightbulb', 'Energy Saving', 'text-warning'),
+  'appliance': ('fa-plug', 'Appliance Optimization', 'text-info'),
+  'peak':      ('fa-clock', 'Peak Hour Optimization', 'text-danger'),
+  'billing':   ('fa-rupee-sign', 'Cost Reduction', 'text-success'),
+} %}
+
+{% for cat_key, recs in by_category.items() %}
+  {% if recs %}
+  {% set icon, label, color = category_meta.get(cat_key, ('fa-info-circle','Other','text-muted')) %}
+  <div class="card mb-4">
+    <div class="card-header">
+      <i class="fas {{ icon }} {{ color }} me-2"></i>{{ label }}
+    </div>
+    <div class="card-body p-0">
+      <div class="list-group list-group-flush">
+        {% for rec in recs %}
+        <div class="list-group-item" style="background:transparent;border-color:var(--se-border)">
+          <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+            <div class="flex-grow-1">
+              <div class="d-flex align-items-center gap-2 mb-1">
+                <h6 class="mb-0">{{ rec.title }}</h6>
+                {% if rec.priority == 'high' %}
+                  <span class="badge bg-danger">High Priority</span>
+                {% elif rec.priority == 'medium' %}
+                  <span class="badge bg-warning text-dark">Medium</span>
+                {% else %}
+                  <span class="badge bg-secondary">Low</span>
+                {% endif %}
+                {% if rec.is_applied %}
+                  <span class="badge bg-success"><i class="fas fa-check me-1"></i>Applied</span>
+                {% endif %}
+              </div>
+              <p class="text-muted small mb-2">{{ rec.description }}</p>
+              {% if rec.potential_saving_kwh and rec.potential_saving_kwh > 0 %}
+              <div class="small">
+                <span class="text-success fw-bold">
+                  <i class="fas fa-piggy-bank me-1"></i>
+                  Save ~{{ "%.2f"|format(rec.potential_saving_kwh) }} kWh
+                  (₹{{ "%.2f"|format(rec.potential_saving_cost) }}) / month
+                </span>
+              </div>
+              {% endif %}
+            </div>
+            {% if not rec.is_applied %}
+            <a href="{{ url_for('recommendations.apply', rec_id=rec.id) }}"
+               class="btn btn-sm btn-outline-secondary flex-shrink-0">
+              <i class="fas fa-check me-1"></i>Mark Applied
+            </a>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+{% endfor %}
+
+{% endblock %}

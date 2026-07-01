@@ -1,0 +1,170 @@
+/* ============================================================
+   Smart Energy Analytics — Main Stylesheet
+   ============================================================ */
+
+/* ── Variables ─────────────────────────────────────────────── */
+:root {
+  --se-primary:   #f59e0b;   /* amber */
+  --se-dark:      #111827;
+  --se-card-bg:   #1f2937;
+  --se-border:    #374151;
+  --se-text-muted:#9ca3af;
+  --se-success:   #10b981;
+  --se-danger:    #ef4444;
+  --se-info:      #3b82f6;
+  --se-body-bg:   #0f172a;
+  --se-body-text: #e2e8f0;
+  --se-input-bg:  #0f172a;
+}
+
+/* ── Light theme overrides ──────────────────────────────────── */
+[data-theme="light"] {
+  --se-dark:      #f8fafc;
+  --se-card-bg:   #ffffff;
+  --se-border:    #e2e8f0;
+  --se-text-muted:#64748b;
+  --se-body-bg:   #f1f5f9;
+  --se-body-text: #1e293b;
+  --se-input-bg:  #ffffff;
+}
+
+[data-theme="light"] .navbar { box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+[data-theme="light"] .nav-link { color:#475569 !important; }
+[data-theme="light"] .table thead th { color:#64748b; }
+[data-theme="light"] .form-control, [data-theme="light"] .form-select { color:#1e293b; }
+[data-theme="light"] .form-control::placeholder { color:#94a3b8; }
+[data-theme="light"] .input-group-text { background:#f1f5f9; color:#64748b; }
+[data-theme="light"] ::-webkit-scrollbar-track { background:#f1f5f9; }
+[data-theme="light"] ::-webkit-scrollbar-thumb { background:#cbd5e1; }
+[data-theme="light"] .sidebar .nav-link:hover { background:rgba(0,0,0,.04); }
+[data-theme="light"] .table-hover tbody tr:hover { background: rgba(0,0,0,.02); }
+
+/* Smooth theme transition */
+body, .card, .navbar, .sidebar, .form-control, .form-select, .table, footer {
+  transition: background-color .25s ease, color .25s ease, border-color .25s ease;
+}
+
+/* ── Theme toggle button ────────────────────────────────────── */
+.theme-toggle-btn {
+  background: transparent;
+  border: 1px solid var(--se-border);
+  color: var(--se-body-text);
+  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.theme-toggle-btn:hover { background: rgba(255,255,255,.08); }
+[data-theme="light"] .theme-toggle-btn:hover { background: rgba(0,0,0,.05); }
+
+/* ── Global ─────────────────────────────────────────────────── */
+body { background: var(--se-body-bg); color: var(--se-body-text); font-family:'Segoe UI',sans-serif; }
+a { color: var(--se-primary); }
+a:hover { color: #fcd34d; }
+
+/* ── Navbar ─────────────────────────────────────────────────── */
+.navbar { background: var(--se-dark) !important; border-bottom:1px solid var(--se-border); }
+.navbar-brand { color: var(--se-primary) !important; font-weight:700; font-size:1.2rem; }
+.nav-link { color:#cbd5e1 !important; transition:color .2s; }
+.nav-link:hover, .nav-link.active { color: var(--se-primary) !important; }
+
+/* ── Cards ──────────────────────────────────────────────────── */
+.card {
+  background: var(--se-card-bg);
+  border: 1px solid var(--se-border);
+  border-radius: 12px;
+}
+.card-header {
+  background: rgba(255,255,255,.03);
+  border-bottom: 1px solid var(--se-border);
+  font-weight: 600;
+}
+
+/* ── KPI Cards ──────────────────────────────────────────────── */
+.kpi-card {
+  background: var(--se-card-bg);
+  border: 1px solid var(--se-border);
+  border-radius:12px;
+  padding:1.25rem 1.5rem;
+  transition: transform .2s, box-shadow .2s;
+}
+.kpi-card:hover { transform:translateY(-3px); box-shadow:0 8px 24px rgba(0,0,0,.35); }
+.kpi-icon { font-size:2rem; opacity:.85; }
+.kpi-value { font-size:1.75rem; font-weight:700; line-height:1.1; }
+.kpi-label { font-size:.78rem; color: var(--se-text-muted); text-transform:uppercase; letter-spacing:.05em; }
+.kpi-sub   { font-size:.82rem; color: var(--se-text-muted); margin-top:.25rem; }
+
+/* ── Auth pages ─────────────────────────────────────────────── */
+.auth-wrapper { min-height:100vh; display:flex; align-items:center; justify-content:center;
+                background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%); }
+.auth-card { background: var(--se-card-bg); border:1px solid var(--se-border);
+             border-radius:16px; padding:2.5rem; width:100%; max-width:480px; }
+.auth-card h2 { color: var(--se-primary); font-weight:700; }
+.auth-logo { font-size:2rem; color: var(--se-primary); }
+
+/* ── Form controls (dark theme) ─────────────────────────────── */
+.form-control, .form-select {
+  background: var(--se-input-bg); border:1px solid var(--se-border);
+  color:#e2e8f0; border-radius:8px;
+}
+.form-control:focus, .form-select:focus {
+  background: var(--se-input-bg); border-color: var(--se-primary);
+  color:#e2e8f0; box-shadow:0 0 0 3px rgba(245,158,11,.2);
+}
+.form-control::placeholder { color: var(--se-text-muted); }
+.form-label { color:#cbd5e1; font-weight:500; font-size:.9rem; }
+.input-group-text { background: var(--se-card-bg); border:1px solid var(--se-border); color: var(--se-text-muted); }
+
+/* ── Buttons ─────────────────────────────────────────────────── */
+.btn-primary   { background: var(--se-primary); border-color: var(--se-primary); color:#000; font-weight:600; }
+.btn-primary:hover { background:#d97706; border-color:#d97706; color:#000; }
+.btn-outline-secondary { border-color: var(--se-border); color:#cbd5e1; }
+.btn-outline-secondary:hover { background: var(--se-border); color:#fff; }
+
+/* ── Tables ──────────────────────────────────────────────────── */
+.table { color:#e2e8f0; }
+.table > :not(caption) > * > * { background: transparent; }
+.table-hover tbody tr:hover { background: rgba(255,255,255,.04); }
+.table thead th { color: var(--se-text-muted); font-size:.8rem; text-transform:uppercase;
+                  letter-spacing:.05em; border-color: var(--se-border); }
+.table td, .table th { border-color: var(--se-border); }
+
+/* ── Alerts ──────────────────────────────────────────────────── */
+.alert { border-radius:10px; border:none; }
+
+/* ── Sidebar / layout ────────────────────────────────────────── */
+.sidebar { background: var(--se-card-bg); border-right:1px solid var(--se-border);
+           min-height:calc(100vh - 56px); padding:1rem 0; }
+.sidebar .nav-link { color:#94a3b8; padding:.6rem 1.25rem; border-radius:8px; margin:.1rem .5rem; }
+.sidebar .nav-link:hover { background:rgba(255,255,255,.06); color:#fff; }
+.sidebar .nav-link.active { background:rgba(245,158,11,.15); color: var(--se-primary); }
+.sidebar .nav-link i { width:20px; text-align:center; }
+
+/* ── Page wrapper ────────────────────────────────────────────── */
+.page-content { padding:1.5rem; }
+.page-title { font-size:1.4rem; font-weight:700; color:#f1f5f9; margin-bottom:.25rem; }
+.page-subtitle { color: var(--se-text-muted); font-size:.88rem; margin-bottom:1.5rem; }
+
+/* ── Badge pills ─────────────────────────────────────────────── */
+.badge { border-radius:20px; }
+
+/* ── Chart container ─────────────────────────────────────────── */
+.chart-wrapper { position:relative; height:280px; }
+
+/* ── Footer ──────────────────────────────────────────────────── */
+footer { background: var(--se-dark); border-top:1px solid var(--se-border);
+         color: var(--se-text-muted); font-size:.82rem; }
+
+/* ── Scrollbar ───────────────────────────────────────────────── */
+::-webkit-scrollbar { width:6px; }
+::-webkit-scrollbar-track { background: var(--se-body-bg); }
+::-webkit-scrollbar-thumb { background: var(--se-border); border-radius:3px; }
+
+/* ── Responsive ──────────────────────────────────────────────── */
+@media (max-width:768px) {
+  .kpi-value { font-size:1.4rem; }
+  .auth-card { padding:1.5rem; margin:1rem; }
+}

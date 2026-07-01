@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+{% block title %}Dashboard – Smart Energy Analytics{% endblock %}
+{% block content %}
+<div class="page-title">Dashboard</div>
+<div class="page-subtitle">{{ cur_month_name }} {{ cur_year }} &mdash; Your energy at a glance</div>
+
+<!-- ── KPI Cards ──────────────────────────────────────────── -->
+<div class="row g-3 mb-4">
+
+  <div class="col-6 col-xl-3">
+    <div class="kpi-card">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <div class="kpi-label">Total Consumption</div>
+          <div class="kpi-value text-warning">{{ "%.1f"|format(total_kwh) }}</div>
+          <div class="kpi-sub">kWh all-time</div>
+        </div>
+        <div class="kpi-icon text-warning"><i class="fas fa-bolt"></i></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-6 col-xl-3">
+    <div class="kpi-card">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <div class="kpi-label">This Month</div>
+          <div class="kpi-value text-info">{{ "%.1f"|format(month_kwh) }}</div>
+          <div class="kpi-sub">kWh in {{ cur_month_name }}</div>
+        </div>
+        <div class="kpi-icon text-info"><i class="fas fa-calendar-alt"></i></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-6 col-xl-3">
+    <div class="kpi-card">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <div class="kpi-label">Estimated Bill</div>
+          <div class="kpi-value text-success">₹{{ "%.0f"|format(estimated_bill) }}</div>
+          <div class="kpi-sub">@ ₹{{ "%.2f"|format(tariff) }}/kWh</div>
+        </div>
+        <div class="kpi-icon text-success"><i class="fas fa-rupee-sign"></i></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-6 col-xl-3">
+    <div class="kpi-card">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <div class="kpi-label">Carbon Footprint</div>
+          <div class="kpi-value text-danger">{{ "%.1f"|format(carbon_month) }}</div>
+          <div class="kpi-sub">kg CO₂ this month</div>
+        </div>
+        <div class="kpi-icon text-danger"><i class="fas fa-leaf"></i></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── Chart + Alerts row ─────────────────────────────────── -->
+<div class="row g-3 mb-4">
+
+  <div class="col-lg-8">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="fas fa-chart-bar text-warning me-2"></i>Monthly Consumption (kWh)</span>
+        <a href="{{ url_for('data_import.index') }}" class="btn btn-sm btn-outline-secondary">
+          <i class="fas fa-upload me-1"></i>Add Data
+        </a>
+      </div>
+      <div class="card-body">
+        {% if chart_labels %}
+          <div class="chart-wrapper">
+            <canvas id="consumptionChart"></canvas>
+          </div>
+        {% else %}
+          <div class="text-center py-5 text-muted">
+            <i class="fas fa-database fa-3x mb-3 d-block"></i>
+            No usage data yet.
+            <a href="{{ url_for('data_import.index') }}">Import your first records</a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="fas fa-bell text-warning me-2"></i>Active Alerts</span>
+        {% if alert_count %}
+          <span class="badge bg-danger">{{ alert_count }}</span>
+        {% endif %}
+      </div>
+      <div class="card-body p-0">
+        {% if unread_alerts %}
+          <ul class="list-group list-group-flush">
+            {% for alert in unread_alerts %}
+            <li class="list-group-item" style="background:transparent;border-color:var(--se-border)">
+              <div class="d-flex align-items-start gap-2">
+                <span class="badge bg-{{ alert.badge_color }} mt-1">{{ alert.severity }}</span>
+                <div>
+                  <div class="small text-light">{{ alert.message }}</div>
+                  <div class="text-muted" style="font-size:.75rem">
+                    {{ alert.triggered_at.strftime('%d %b, %H:%M') }}
+                  </div>
+                </div>
+              </div>
+            </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <div class="text-center py-4 text-muted">
+            <i class="fas fa-check-circle fa-2x text-success mb-2 d-block"></i>
+            No active alerts
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Recent Records table ───────────────────────────────── -->
+<div class="card">
+  <div class="card-header">
+    <i class="fas fa-history text-warning me-2"></i>Recent Usage Records
+  </div>
+  <div class="card-body p-0">
+    {% if recent_records %}
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Units (kWh)</th>
+            <th>Cost</th>
+            <th>Source</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for rec in recent_records %}
+          <tr>
+            <td>{{ rec.date.strftime('%d %b %Y') }}</td>
+            <td><strong>{{ "%.2f"|format(rec.units_consumed) }}</strong></td>
+            <td>
+              {% if rec.cost %}₹{{ "%.2f"|format(rec.cost) }}
+              {% else %}<span class="text-muted">—</span>{% endif %}
+            </td>
+            <td>
+              <span class="badge bg-secondary">{{ rec.source }}</span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="text-center py-4 text-muted">
+      <i class="fas fa-table fa-2x mb-2 d-block"></i>
+      No records yet. <a href="{{ url_for('data_import.index') }}">Add your first entry.</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if chart_labels %}
+<script>
+const seTheme = window.seChartTheme();
+const ctx = document.getElementById("consumptionChart").getContext("2d");
+new Chart(ctx, {
+  type: "bar",
+  data: {
+    labels: {{ chart_labels | tojson }},
+    datasets: [{
+      label: "kWh",
+      data: {{ chart_values | tojson }},
+      backgroundColor: "rgba(245,158,11,0.6)",
+      borderColor: "rgba(245,158,11,1)",
+      borderWidth: 1,
+      borderRadius: 5,
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: ctx => ` ${ctx.parsed.y.toFixed(2)} kWh`
+        }
+      }
+    },
+    scales: {
+      x: { ticks: { color: seTheme.text }, grid: { color: seTheme.grid } },
+      y: { ticks: { color: seTheme.text }, grid: { color: seTheme.grid },
+           beginAtZero: true }
+    }
+  }
+});
+</script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Manage Datasets – Admin{% endblock %}
+{% block content %}
+<div class="page-title">Dataset Management</div>
+<div class="page-subtitle">
+  <a href="{{ url_for('admin.index') }}"><i class="fas fa-arrow-left me-1"></i>Back to Admin Dashboard</a>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <i class="fas fa-database text-warning me-2"></i>Recent Electricity Usage Records
+    <span class="text-muted small ms-2">(latest 50 across all users)</span>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>User</th>
+            <th>Date</th>
+            <th>Units (kWh)</th>
+            <th>Cost</th>
+            <th>Source</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for record, user in records %}
+          <tr>
+            <td>{{ record.id }}</td>
+            <td>{{ user.username }}</td>
+            <td>{{ record.date.strftime('%d %b %Y') }}</td>
+            <td>{{ "%.2f"|format(record.units_consumed) }}</td>
+            <td>{% if record.cost %}₹{{ "%.2f"|format(record.cost) }}{% else %}—{% endif %}</td>
+            <td><span class="badge bg-secondary">{{ record.source }}</span></td>
+            <td class="text-end">
+              <a href="{{ url_for('admin.delete_dataset_record', record_id=record.id) }}"
+                 class="btn btn-sm btn-outline-danger"
+                 data-confirm="Delete this usage record for {{ user.username }} on {{ record.date.strftime('%d %b %Y') }}?">
+                <i class="fas fa-trash"></i>
+              </a>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="7" class="text-center text-muted py-4">No usage records found.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

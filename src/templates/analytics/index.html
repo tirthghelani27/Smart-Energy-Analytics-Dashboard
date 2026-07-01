@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+{% block title %}Analytics – Smart Energy Analytics{% endblock %}
+{% block content %}
+<div class="page-title">Energy Analytics</div>
+<div class="page-subtitle">Detailed consumption breakdown across time periods</div>
+
+<!-- ── Period Tabs ────────────────────────────────────────── -->
+<ul class="nav nav-pills mb-4">
+  {% for p, label, icon in [
+       ('daily','Daily','fa-calendar-day'),
+       ('weekly','Weekly','fa-calendar-week'),
+       ('monthly','Monthly','fa-calendar-alt'),
+       ('yearly','Yearly','fa-calendar')] %}
+  <li class="nav-item">
+    <a class="nav-link {% if period == p %}active{% endif %}"
+       href="{{ url_for('analytics.index', period=p) }}">
+      <i class="fas {{ icon }} me-1"></i>{{ label }}
+    </a>
+  </li>
+  {% endfor %}
+</ul>
+
+<!-- ── KPI Cards ──────────────────────────────────────────── -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-xl-3">
+    <div class="kpi-card">
+      <div class="kpi-label">Total Consumption</div>
+      <div class="kpi-value text-warning">{{ "%.1f"|format(stats.total) }}</div>
+      <div class="kpi-sub">kWh</div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="kpi-card">
+      <div class="kpi-label">Average</div>
+      <div class="kpi-value text-info">{{ "%.2f"|format(stats.average) }}</div>
+      <div class="kpi-sub">kWh / period</div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="kpi-card">
+      <div class="kpi-label">Highest</div>
+      <div class="kpi-value text-danger">{{ "%.2f"|format(stats.highest) }}</div>
+      <div class="kpi-sub">kWh peak</div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="kpi-card">
+      <div class="kpi-label">Lowest</div>
+      <div class="kpi-value text-success">{{ "%.2f"|format(stats.lowest) }}</div>
+      <div class="kpi-sub">kWh minimum</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Growth Rate Banner ─────────────────────────────────── -->
+<div class="card mb-4">
+  <div class="card-body d-flex align-items-center justify-content-between flex-wrap gap-2">
+    <div>
+      <i class="fas fa-chart-line text-warning me-2"></i>
+      <strong>Growth Rate</strong>
+      <span class="text-muted small ms-2">(first half vs. second half of period)</span>
+    </div>
+    <div>
+      {% if stats.growth_rate > 0 %}
+        <span class="badge bg-danger fs-6"><i class="fas fa-arrow-up me-1"></i>{{ stats.growth_rate }}%</span>
+      {% elif stats.growth_rate < 0 %}
+        <span class="badge bg-success fs-6"><i class="fas fa-arrow-down me-1"></i>{{ stats.growth_rate }}%</span>
+      {% else %}
+        <span class="badge bg-secondary fs-6"><i class="fas fa-minus me-1"></i>0%</span>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- ── Chart ──────────────────────────────────────────────── -->
+<div class="card mb-4">
+  <div class="card-header">
+    <i class="fas fa-chart-bar text-warning me-2"></i>
+    {{ period|capitalize }} Consumption Trend
+  </div>
+  <div class="card-body">
+    {% if chart_labels %}
+      <div class="chart-wrapper">
+        <canvas id="analyticsChart"></canvas>
+      </div>
+    {% else %}
+      <div class="text-center py-5 text-muted">
+        <i class="fas fa-database fa-3x mb-3 d-block"></i>
+        No data available for this period.
+        <a href="{{ url_for('data_import.index') }}">Import usage records</a>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- ── Peak / Lowest day cards ────────────────────────────── -->
+<div class="row g-3">
+  <div class="col-md-6">
+    <div class="card h-100">
+      <div class="card-body d-flex align-items-center gap-3">
+        <div class="kpi-icon text-danger"><i class="fas fa-bolt"></i></div>
+        <div>
+          <div class="kpi-label">Peak Consumption Day</div>
+          {% if peak_day %}
+            <div class="kpi-value text-danger">{{ "%.2f"|format(peak_day.units_consumed) }} kWh</div>
+            <div class="kpi-sub">{{ peak_day.date.strftime('%d %b %Y') }}</div>
+          {% else %}
+            <div class="text-muted">No data yet</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card h-100">
+      <div class="card-body d-flex align-items-center gap-3">
+        <div class="kpi-icon text-success"><i class="fas fa-leaf"></i></div>
+        <div>
+          <div class="kpi-label">Lowest Consumption Day</div>
+          {% if lowest_day %}
+            <div class="kpi-value text-success">{{ "%.2f"|format(lowest_day.units_consumed) }} kWh</div>
+            <div class="kpi-sub">{{ lowest_day.date.strftime('%d %b %Y') }}</div>
+          {% else %}
+            <div class="text-muted">No data yet</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+{% if chart_labels %}
+<script>
+const seTheme = window.seChartTheme();
+const ctx = document.getElementById("analyticsChart").getContext("2d");
+new Chart(ctx, {
+  type: "{{ 'bar' if period in ['daily','weekly'] else 'line' }}",
+  data: {
+    labels: {{ chart_labels | tojson }},
+    datasets: [{
+      label: "kWh",
+      data: {{ chart_values | tojson }},
+      backgroundColor: "rgba(245,158,11,0.5)",
+      borderColor: "rgba(245,158,11,1)",
+      borderWidth: 2,
+      borderRadius: 4,
+      tension: 0.3,
+      fill: true,
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.y.toFixed(2)} kWh` } }
+    },
+    scales: {
+      x: { ticks: { color: seTheme.text }, grid: { color: seTheme.grid } },
+      y: { ticks: { color: seTheme.text }, grid: { color: seTheme.grid }, beginAtZero: true }
+    }
+  }
+});
+</script>
+{% endif %}
+{% endblock %}

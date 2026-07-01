@@ -1,0 +1,61 @@
+<nav class="sidebar d-none d-md-block" style="width:220px;flex-shrink:0">
+  <ul class="nav flex-column pt-2">
+    <li class="nav-item">
+      <a class="nav-link {% if request.endpoint == 'dashboard.index' %}active{% endif %}"
+         href="{{ url_for('dashboard.index') }}">
+        <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link {% if request.blueprint == 'analytics' %}active{% endif %}"
+         href="{{ url_for('analytics.index') }}">
+        <i class="fas fa-chart-line me-2"></i>Analytics
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link {% if request.blueprint == 'appliances' %}active{% endif %}"
+         href="{{ url_for('appliances.index') }}">
+        <i class="fas fa-plug me-2"></i>Appliances
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link {% if request.blueprint == 'forecasting' %}active{% endif %}"
+         href="{{ url_for('forecasting.index') }}">
+        <i class="fas fa-brain me-2"></i>Forecasting
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link {% if request.blueprint == 'carbon' %}active{% endif %}"
+         href="{{ url_for('carbon.index') }}">
+        <i class="fas fa-leaf me-2"></i>Carbon
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link {% if request.blueprint == 'recommendations' %}active{% endif %}"
+         href="{{ url_for('recommendations.index') }}">
+        <i class="fas fa-lightbulb me-2"></i>Tips
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link {% if request.blueprint == 'data_import' %}active{% endif %}"
+         href="{{ url_for('data_import.index') }}">
+        <i class="fas fa-upload me-2"></i>Import Data
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link {% if request.blueprint == 'reports' %}active{% endif %}"
+         href="{{ url_for('reports.index') }}">
+        <i class="fas fa-file-pdf me-2"></i>Reports
+      </a>
+    </li>
+    {% if current_user.is_admin %}
+    <li class="nav-item mt-2">
+      <hr class="border-secondary my-1">
+      <a class="nav-link {% if request.blueprint == 'admin' %}active{% endif %}"
+         href="{{ url_for('admin.index') }}">
+        <i class="fas fa-shield-alt me-2"></i>Admin
+      </a>
+    </li>
+    {% endif %}
+  </ul>
+</nav>
